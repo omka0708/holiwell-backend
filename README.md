@@ -1,7 +1,7 @@
 # holiwell-backend
 
 Backend service for gym app.
-Used stack: *FastAPI*, *PostgreSQL*, *asyncio*, *Kubernetes*.
+Used stack: *FastAPI*, *PostgreSQL*, *asyncio*.
 
 ## Install
 
