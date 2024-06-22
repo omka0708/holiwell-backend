@@ -1,12 +1,9 @@
-from fastapi import FastAPI, Depends, Request
-from fastapi.responses import RedirectResponse, Response
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.responses import RedirectResponse, Response
 
 from app.auth.auth import auth_backend, fastapi_users
 from app.auth.schemas import UserRead, UserCreate
-from .auth.models import User
-from .database import get_async_session
 from .routers import user, trainer, lesson, course
 
 app = FastAPI(title='Holiwell API')
@@ -27,7 +24,6 @@ app.include_router(
     prefix="/api/auth/jwt",
     tags=["auth"],
 )
-
 
 app.include_router(
     fastapi_users.get_register_router(UserRead, UserCreate),
