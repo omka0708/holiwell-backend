@@ -19,6 +19,8 @@ class Lesson(Base):
     course_id = Column(Integer, ForeignKey("course.id"))
     course = relationship("Course", back_populates="lessons", lazy='selectin')
 
+    planned_lessons = relationship("PlannedLesson", back_populates="lesson")
+
 
 class LinkBeforeLesson(Base):
     __tablename__ = "link_before_lesson"

@@ -1,7 +1,9 @@
-from typing import Optional
+from datetime import datetime
 
 from fastapi_users import schemas
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_serializer
+
+from app.lesson import schemas as lesson_schemas
 
 
 class UserRead(schemas.BaseUser[int]):
@@ -25,3 +27,13 @@ class UserUpdate(schemas.BaseUserUpdate):
 
 class EmailSchema(BaseModel):
     email: list[EmailStr]
+
+
+class PlannedLessonCreate(BaseModel):
+    timestamp: datetime
+    lesson_id: int
+
+
+class PlannedLessonRead(BaseModel):
+    timestamp: datetime
+    lesson: lesson_schemas.LessonRead

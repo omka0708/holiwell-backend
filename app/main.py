@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse, Response
+from fastapi.responses import RedirectResponse, Response, JSONResponse
+from pydantic import ValidationError
 
 from app.auth.auth import auth_backend, fastapi_users
 from app.auth.schemas import UserRead, UserCreate
@@ -21,19 +22,19 @@ async def preflight_handler():
 
 app.include_router(
     fastapi_users.get_auth_router(auth_backend),
-    prefix="/api/auth/jwt",
+    prefix="/auth/jwt",
     tags=["auth"],
 )
 
 app.include_router(
     fastapi_users.get_register_router(UserRead, UserCreate),
-    prefix="/api/auth",
+    prefix="/auth",
     tags=["auth"],
 )
 
 app.include_router(
     fastapi_users.get_reset_password_router(),
-    prefix="/api/auth",
+    prefix="/auth",
     tags=["auth"],
 )
 
