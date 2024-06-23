@@ -35,5 +35,6 @@ class PlannedLessonCreate(BaseModel):
 
 
 class PlannedLessonRead(BaseModel):
+    id: int
     timestamp: datetime
     lesson: lesson_schemas.LessonRead

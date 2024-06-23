@@ -38,6 +38,16 @@ async def create_planned_lesson(planned_lesson: schemas.PlannedLessonCreate, use
     return db_lesson
 
 
+async def delete_link_after_lesson(plan_lesson_id: int,
+                                   db: AsyncSession):
+    db_link_after_lesson = await db.get(models.PlannedLesson, plan_lesson_id)
+    if not db_link_after_lesson:
+        return
+    await db.delete(db_link_after_lesson)
+    await db.commit()
+    return True
+
+
 async def get_planned_lessons_by_user(user_id: int, db: AsyncSession):
     db_planned_lessons = await db.execute(select(models.PlannedLesson).
                                           where(models.PlannedLesson.user_id == user_id))

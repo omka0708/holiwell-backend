@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, UploadFile, Response, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, Response, HTTPException, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import crud, schemas
@@ -27,8 +28,8 @@ async def update_avatar(avatar: UploadFile = None,
 
 
 @router.post("/plan-lesson", response_model=schemas.PlannedLessonCreate)
-async def create_planned_lesson(lesson_id: int,
-                                timestamp: str,
+async def create_planned_lesson(lesson_id: Annotated[int, Form()],
+                                timestamp: Annotated[str, Form()],
                                 user: User = Depends(fastapi_users.current_user()),
                                 session: AsyncSession = Depends(get_async_session)):
     try:
@@ -48,6 +49,19 @@ async def create_planned_lesson(lesson_id: int,
             "msg": f"Lesson {lesson_id} doesn't exist."
         })
     return Response(status_code=201)
+
+
+@router.delete("/plan-lesson")
+async def delete_link_after_lesson(plan_lesson_id: int,
+                                   user: User = Depends(fastapi_users.current_user(superuser=True)),
+                                   session: AsyncSession = Depends(get_async_session)):
+    result = await crud.delete_link_after_lesson(plan_lesson_id, session)
+    if not result:
+        raise HTTPException(status_code=404, detail={
+            "status": "error",
+            "msg": f"Plan lesson {plan_lesson_id} doesn't exist."
+        })
+    return Response(status_code=204)
 
 
 @router.get("/my-calendar", response_model=list[schemas.PlannedLessonRead])
