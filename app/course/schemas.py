@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 
+from app.config import HOSTNAME
 from app.lesson import schemas as lesson_schemas
 
 
@@ -15,6 +16,10 @@ class CourseRead(BaseModel):
     description: str
     path_to_cover: str | None
     lessons: list[lesson_schemas.LessonRead]
+
+    @field_serializer('path_to_cover')
+    def add_hostname(self, path: str) -> str:
+        return HOSTNAME + path
 
 
 class CourseUpdate(BaseModel):

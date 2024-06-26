@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
+
+from app.config import HOSTNAME
 
 
 class TrainerCreate(BaseModel):
@@ -14,6 +16,10 @@ class TrainerRead(BaseModel):
     description: str
     path_to_avatar: str
     path_to_background: str
+
+    @field_serializer('path_to_avatar', 'path_to_background')
+    def add_hostname(self, path: str) -> str:
+        return HOSTNAME + path
 
 
 class TrainerUpdate(BaseModel):

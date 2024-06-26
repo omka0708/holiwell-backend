@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
+from app.config import HOSTNAME
 from app.trainer import schemas as trainer_schemas
 
 
@@ -27,6 +28,10 @@ class LessonRead(BaseModel):
     path_to_audio: str | None
     links_before: list[LinkedLessonRead]
     links_after: list[LinkedLessonRead]
+
+    @field_serializer('path_to_cover', 'path_to_video', 'path_to_audio')
+    def add_hostname(self, path: str) -> str:
+        return HOSTNAME + path
 
 
 class LessonUpdate(BaseModel):
