@@ -30,8 +30,9 @@ class LessonRead(BaseModel):
     links_after: list[LinkedLessonRead]
 
     @field_serializer('path_to_cover', 'path_to_video', 'path_to_audio')
-    def add_hostname(self, path: str) -> str:
-        return HOSTNAME + path
+    def add_hostname(self, path: str | None) -> str | None:
+        if type(path) is str:
+            return HOSTNAME + path
 
 
 class LessonUpdate(BaseModel):

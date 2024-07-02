@@ -9,18 +9,18 @@ from app.utils import upload_file, delete_file
 
 
 async def create_lesson(lesson: schemas.LessonCreate,
-                        cover: UploadFile,
-                        video: UploadFile,
-                        audio: UploadFile,
+                        cover: UploadFile | None,
+                        video: UploadFile | None,
+                        audio: UploadFile | None,
                         db: AsyncSession):
     lesson_dict = lesson.model_dump()
     db_trainer = await db.get(trainer_models.Trainer, lesson_dict['trainer_id'])
     if not db_trainer:
         return 'no_trainer'
 
-    lesson_dict['path_to_cover'] = upload_file('lessons/cover', cover, cover.filename)
-    lesson_dict['path_to_video'] = upload_file('lessons/video', video, video.filename)
-    lesson_dict['path_to_audio'] = upload_file('lessons/audio', audio, audio.filename)
+    lesson_dict['path_to_cover'] = upload_file('lessons/cover', cover, cover.filename) if cover else None
+    lesson_dict['path_to_video'] = upload_file('lessons/video', video, video.filename) if video else None
+    lesson_dict['path_to_audio'] = upload_file('lessons/audio', audio, audio.filename) if audio else None
 
     db_lesson = models.Lesson(**lesson_dict)
     db.add(db_lesson)
