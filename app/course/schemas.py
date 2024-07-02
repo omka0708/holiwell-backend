@@ -14,6 +14,8 @@ class CourseRead(BaseModel):
     id: int
     title: str
     description: str
+    course_type_id: int | None
+    course_type_slug: str | None
     path_to_cover: str | None
     lessons: list[lesson_schemas.LessonRead]
 

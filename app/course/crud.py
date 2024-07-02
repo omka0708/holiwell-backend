@@ -83,6 +83,8 @@ async def get_course(course_id: int, db: AsyncSession):
     if not db_course:
         return
 
+    db_course.course_type_slug = db_course.course_type.slug
+    db_course.course_type_id = db_course.course_type.id
     for lesson in db_course.lessons:
         lesson.links_before = await get_links_before_by_lesson(lesson.id, db)
         lesson.links_after = await get_links_after_by_lesson(lesson.id, db)
@@ -95,6 +97,8 @@ async def get_courses(db: AsyncSession):
     obj_courses = db_courses.scalars().all()
 
     for obj in obj_courses:
+        obj.course_type_slug = obj.course_type.slug
+        obj.course_type_id = obj.course_type.id
         for lesson in obj.lessons:
             lesson.links_before = await get_links_before_by_lesson(lesson.id, db)
             lesson.links_after = await get_links_after_by_lesson(lesson.id, db)
