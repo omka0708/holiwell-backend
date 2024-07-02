@@ -52,7 +52,7 @@ def delete_file(path: str):
 def get_file_length(path: str) -> str | None:
     if path:
         try:
-            media_info = MediaInfo.parse(os.path.abspath(path))
+            media_info = MediaInfo.parse(path)
         except OSError:
             return
         milliseconds = media_info.tracks[0].duration
