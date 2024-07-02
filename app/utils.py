@@ -1,15 +1,15 @@
 import shutil
-
-import requests
 import os
 import shortuuid
 
+from pymediainfo import MediaInfo
 from fastapi import Depends, UploadFile
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
 from app.database import get_async_session
+
 
 # SERVER_IP = f"http://{requests.get('https://httpbin.org/ip').json()['origin']}"
 
@@ -47,3 +47,16 @@ def delete_file(path: str):
         os.remove(path)
         if not os.listdir(directory):
             os.rmdir(directory)
+
+
+def get_file_length(path: str) -> str | None:
+    if path:
+        media_info = MediaInfo.parse(os.path.abspath(path))
+        milliseconds = media_info.tracks[0].duration
+
+        (hours, milliseconds) = divmod(milliseconds, 3600 * 1000)
+        (minutes, milliseconds) = divmod(milliseconds, 60 * 1000)
+        (seconds, milliseconds) = divmod(milliseconds, 1000)
+
+        formatted = f"{hours:02.0f}:{minutes:02.0f}:{seconds:02.0f}"
+        return formatted
