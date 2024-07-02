@@ -30,13 +30,13 @@ async def read_course_types(session: AsyncSession = Depends(get_async_session)):
     return await crud.get_course_types(session)
 
 
-@router.get("/course-type/{course_type_id}", response_model=schemas.CourseTypeRead)
-async def read_course(course_type_id: int, session: AsyncSession = Depends(get_async_session)):
-    result = await crud.get_course_type(course_type_id, session)
+@router.get("/course-type/{course_type_slug}", response_model=schemas.CourseTypeRead)
+async def read_course(course_type_slug: str, session: AsyncSession = Depends(get_async_session)):
+    result = await crud.get_course_type(course_type_slug, session)
     if not result:
         raise HTTPException(status_code=404, detail={
             "status": "error",
-            "msg": f"Course type {course_type_id} doesn't exist."
+            "msg": f"Course type {course_type_slug} doesn't exist."
         })
     return result
 

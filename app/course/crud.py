@@ -36,8 +36,9 @@ async def get_course_types(db: AsyncSession):
     return sorted(obj_course_types, key=lambda x: x.id)
 
 
-async def get_course_type(course_type_id: int, db: AsyncSession):
-    obj_course_type = await db.get(models.CourseType, course_type_id)
+async def get_course_type(course_type_slug: str, db: AsyncSession):
+    db_course_type = await db.execute(select(models.CourseType).where(models.CourseType.slug == course_type_slug))
+    obj_course_type = db_course_type.scalar()
     if not obj_course_type:
         return
 
