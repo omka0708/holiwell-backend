@@ -37,10 +37,16 @@ async def get_course_types(db: AsyncSession):
 
 
 async def get_course_type(course_type_id: int, db: AsyncSession):
-    db_course = await db.get(models.CourseType, course_type_id)
-    if not db_course:
+    obj_course_type = await db.get(models.CourseType, course_type_id)
+    if not obj_course_type:
         return
-    return db_course
+
+    for course in obj_course_type.courses:
+        for lesson in course.lessons:
+            lesson.links_before = await get_links_before_by_lesson(lesson.id, db)
+            lesson.links_after = await get_links_after_by_lesson(lesson.id, db)
+
+    return obj_course_type
 
 
 async def create_course(course: schemas.CourseCreate,
