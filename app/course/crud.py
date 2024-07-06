@@ -58,7 +58,7 @@ async def create_course(course: schemas.CourseCreate,
     if not db_course_type:
         return
 
-    course_dict['path_to_cover'] = upload_file('lessons/cover', cover, cover.filename)
+    course_dict['path_to_cover'] = upload_file('courses/cover', cover, cover.filename)
     db_course = models.Course(**course_dict)
     db.add(db_course)
 

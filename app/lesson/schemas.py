@@ -24,6 +24,7 @@ class LessonRead(BaseModel):
     description: str
     trainer: trainer_schemas.TrainerRead | None
     course_id: int | None
+    course_type_slug: str | None
     path_to_cover: str | None
     path_to_video: str | None
     path_to_audio: str | None
