@@ -1,5 +1,5 @@
 from fastapi import UploadFile
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import models, schemas
@@ -78,9 +78,10 @@ async def create_favorite(user_id: int, lesson_id: int, db: AsyncSession):
     if not db_lesson:
         return 'no_lesson'
 
-    db_lesson = await db.execute(select(models.Favorite).where(
-        models.Favorite.user_id == user_id and models.Favorite.lesson_id == lesson_id))
-    if db_lesson:
+    db_lesson = await db.execute(
+        select(models.Favorite).filter(and_(models.Favorite.user_id == user_id, models.Favorite.lesson_id == lesson_id))
+    )
+    if db_lesson.scalar():
         return 'already_exists'
 
     db_favorite = models.Favorite(
@@ -113,10 +114,12 @@ async def get_favorites_by_user(user_id: int, db: AsyncSession):
     return obj_lessons
 
 
-async def delete_favorite(lesson_id: int, db: AsyncSession):
-    db_lesson = await db.get(lesson_models.Lesson, lesson_id)
-    if not db_lesson:
+async def delete_favorite(user_id: int, lesson_id: int, db: AsyncSession):
+    db_favorite = await db.execute(
+        select(models.Favorite).filter(and_(models.Favorite.user_id == user_id, models.Favorite.lesson_id == lesson_id))
+    )
+    obj_favorite = db_favorite.scalar()
+    if not obj_favorite:
         return 'no_lesson'
-
-    await db.delete(db_lesson)
+    await db.delete(obj_favorite)
     await db.commit()

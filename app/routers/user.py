@@ -89,21 +89,21 @@ async def create_favorite(lesson_id: Annotated[int, Form()],
 
 
 @router.delete("/like-lesson", response_model=schemas.FavoriteCreate)
-async def create_favorite(lesson_id: Annotated[int, Form()],
+async def delete_favorite(lesson_id: Annotated[int, Form()],
                           user: models.User = Depends(fastapi_users.current_user()),
                           session: AsyncSession = Depends(get_async_session)):
-    result = await crud.delete_favorite(lesson_id, session)
+    result = await crud.delete_favorite(user.id, lesson_id, session)
     if result == 'no_lesson':
         raise HTTPException(status_code=404, detail={
             "status": "error",
-            "msg": f"Lesson {lesson_id} doesn't exist."
+            "msg": f"Lesson {lesson_id} wasn't liked."
         })
     return Response(status_code=204)
 
 
 @router.get("/my-favorite", response_model=list[lesson_schemas.LessonRead])
-async def delete_favorite(user: models.User = Depends(fastapi_users.current_user()),
-                          session: AsyncSession = Depends(get_async_session)):
+async def get_favorite(user: models.User = Depends(fastapi_users.current_user()),
+                       session: AsyncSession = Depends(get_async_session)):
     return await crud.get_favorites_by_user(user.id, session)
 
 
