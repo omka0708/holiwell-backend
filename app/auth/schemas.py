@@ -10,11 +10,14 @@ from app.lesson import schemas as lesson_schemas
 class UserRead(schemas.BaseUser[int]):
     first_name: str
     last_name: str
+    email: str
     path_to_avatar: str | None
+    is_superuser: bool
 
     @field_serializer('path_to_avatar')
-    def add_hostname(self, path: str) -> str:
-        return HOSTNAME + path
+    def add_hostname(self, path: str) -> str | None:
+        if path:
+            return HOSTNAME + path
 
     class Config:
         from_attributes = True
@@ -43,3 +46,7 @@ class PlannedLessonRead(BaseModel):
     id: int
     timestamp: datetime
     lesson: lesson_schemas.LessonRead
+
+
+class FavoriteCreate(BaseModel):
+    lesson_id: int

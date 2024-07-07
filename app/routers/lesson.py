@@ -84,7 +84,7 @@ async def delete_lesson(lesson_id: int,
                         user: User = Depends(fastapi_users.current_user(superuser=True)),
                         session: AsyncSession = Depends(get_async_session)):
     result = await crud.delete_lesson(lesson_id, session)
-    if not result:
+    if result == 'no_lesson':
         raise HTTPException(status_code=404, detail={
             "status": "error",
             "msg": f"Lesson {lesson_id} doesn't exist."

@@ -6,22 +6,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import crud, schemas
 from app.auth.auth import fastapi_users
-from app.auth.models import User
-from app.auth.schemas import UserRead, UserUpdate
+from app.auth import schemas, models
+from app.lesson import schemas as lesson_schemas
 from app.database import get_async_session
 
 router = APIRouter()
 
 
-@router.get("/all")
+@router.get("/all", response_model=list[schemas.UserRead])
 async def get_all_users(session: AsyncSession = Depends(get_async_session),
-                        user: User = Depends(fastapi_users.current_user(superuser=True))):
+                        user: models.User = Depends(fastapi_users.current_user(superuser=True))):
     return await crud.get_all_users(session)
 
 
 @router.patch("/update-avatar")
 async def update_avatar(avatar: UploadFile = None,
-                        user: User = Depends(fastapi_users.current_user()),
+                        user: models.User = Depends(fastapi_users.current_user()),
                         session: AsyncSession = Depends(get_async_session)):
     await crud.update_avatar(user, avatar, session)
     return Response(status_code=204)
@@ -30,14 +30,14 @@ async def update_avatar(avatar: UploadFile = None,
 @router.post("/plan-lesson", response_model=schemas.PlannedLessonCreate)
 async def create_planned_lesson(lesson_id: Annotated[int, Form()],
                                 timestamp: Annotated[str, Form()],
-                                user: User = Depends(fastapi_users.current_user()),
+                                user: models.User = Depends(fastapi_users.current_user()),
                                 session: AsyncSession = Depends(get_async_session)):
     try:
-        timestamp = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%f%z')
     except ValueError:
         raise HTTPException(status_code=400, detail={
             "status": "error",
-            "msg": f"Field timestamp must have Y-m-d H:M:S format."
+            "msg": f"Field timestamp must have %Y-%m-%dT%H:%M:%S.%f%z format."
         })
 
     planned_lesson = schemas.PlannedLessonCreate(timestamp=timestamp,
@@ -53,7 +53,7 @@ async def create_planned_lesson(lesson_id: Annotated[int, Form()],
 
 @router.delete("/plan-lesson")
 async def delete_link_after_lesson(plan_lesson_id: int,
-                                   user: User = Depends(fastapi_users.current_user(superuser=True)),
+                                   user: models.User = Depends(fastapi_users.current_user(superuser=True)),
                                    session: AsyncSession = Depends(get_async_session)):
     result = await crud.delete_link_after_lesson(plan_lesson_id, session)
     if not result:
@@ -65,12 +65,49 @@ async def delete_link_after_lesson(plan_lesson_id: int,
 
 
 @router.get("/my-calendar", response_model=list[schemas.PlannedLessonRead])
-async def get_planned_lessons(user: User = Depends(fastapi_users.current_user()),
+async def get_planned_lessons(user: models.User = Depends(fastapi_users.current_user()),
                               session: AsyncSession = Depends(get_async_session)):
     return await crud.get_planned_lessons_by_user(user.id, session)
 
 
+@router.post("/like-lesson", response_model=schemas.FavoriteCreate)
+async def create_favorite(lesson_id: Annotated[int, Form()],
+                          user: models.User = Depends(fastapi_users.current_user()),
+                          session: AsyncSession = Depends(get_async_session)):
+    result = await crud.create_favorite(user.id, lesson_id, session)
+    if result == 'no_lesson':
+        raise HTTPException(status_code=404, detail={
+            "status": "error",
+            "msg": f"Lesson {lesson_id} doesn't exist."
+        })
+    elif result == 'already_exists':
+        raise HTTPException(status_code=409, detail={
+            "status": "error",
+            "msg": f"Lesson {lesson_id} has been already liked."
+        })
+    return Response(status_code=201)
+
+
+@router.delete("/like-lesson", response_model=schemas.FavoriteCreate)
+async def create_favorite(lesson_id: Annotated[int, Form()],
+                          user: models.User = Depends(fastapi_users.current_user()),
+                          session: AsyncSession = Depends(get_async_session)):
+    result = await crud.delete_favorite(lesson_id, session)
+    if result == 'no_lesson':
+        raise HTTPException(status_code=404, detail={
+            "status": "error",
+            "msg": f"Lesson {lesson_id} doesn't exist."
+        })
+    return Response(status_code=204)
+
+
+@router.get("/my-favorite", response_model=list[lesson_schemas.LessonRead])
+async def delete_favorite(user: models.User = Depends(fastapi_users.current_user()),
+                          session: AsyncSession = Depends(get_async_session)):
+    return await crud.get_favorites_by_user(user.id, session)
+
+
 router.include_router(
-    fastapi_users.get_users_router(UserRead, UserUpdate),
+    fastapi_users.get_users_router(schemas.UserRead, schemas.UserUpdate),
     tags=["user"],
 )

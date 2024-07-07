@@ -20,6 +20,8 @@ class Lesson(Base):
     course = relationship("Course", back_populates="lessons", lazy='selectin')
 
     planned_lessons = relationship("PlannedLesson", back_populates="lesson", cascade="all, delete")
+    views = relationship("View", back_populates="lesson", cascade="all, delete")
+    favorites = relationship("Favorite", back_populates="lesson", cascade="all, delete")
 
 
 class LinkBeforeLesson(Base):

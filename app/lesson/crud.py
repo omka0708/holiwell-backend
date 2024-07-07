@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.lesson import models, schemas
+from app.auth import models as auth_models
 from app.trainer import models as trainer_models
 from app.trainer.crud import get_trainer
 from app.utils import upload_file, delete_file
@@ -30,6 +31,7 @@ async def create_lesson(lesson: schemas.LessonCreate,
 
 
 async def get_lesson(lesson_id: int, db: AsyncSession):
+    # db_views = await db.execute(select(auth_models.View).where(auth_models.View.user_id == user_id))
     db_lesson = await db.get(models.Lesson, lesson_id)
     if not db_lesson:
         return
@@ -94,7 +96,7 @@ async def update_lesson(lesson_id: int,
 async def delete_lesson(lesson_id: int, db: AsyncSession):
     db_lesson = await db.get(models.Lesson, lesson_id)
     if not db_lesson:
-        return
+        return 'no_lesson'
 
     try:
         delete_file(db_lesson.path_to_cover)
@@ -105,7 +107,6 @@ async def delete_lesson(lesson_id: int, db: AsyncSession):
 
     await db.delete(db_lesson)
     await db.commit()
-    return True
 
 
 async def add_link_before_lesson(lesson_id: int,
