@@ -31,7 +31,6 @@ async def create_lesson(lesson: schemas.LessonCreate,
 
 
 async def get_lesson(lesson_id: int, db: AsyncSession):
-    # db_views = await db.execute(select(auth_models.View).where(auth_models.View.user_id == user_id))
     db_lesson = await db.get(models.Lesson, lesson_id)
     if not db_lesson:
         return
@@ -41,10 +40,15 @@ async def get_lesson(lesson_id: int, db: AsyncSession):
     db_lesson.links_before = await get_links_before_by_lesson(lesson_id, db)
     db_lesson.links_after = await get_links_after_by_lesson(lesson_id, db)
 
+    db_views = await db.execute(select(auth_models.View).where(auth_models.View.lesson_id == lesson_id))
+    obj_views = db_views.scalars().all()
+
+    db_lesson.number_of_views = len(obj_views)
+
     return db_lesson
 
 
-async def get_lessons(db: AsyncSession):
+async def get_lessons(sort_by: str | None, db: AsyncSession):
     db_lessons = await db.execute(select(models.Lesson).limit(1000))
     obj_lessons = db_lessons.scalars().all()
 
@@ -54,7 +58,16 @@ async def get_lessons(db: AsyncSession):
         obj.links_before = await get_links_before_by_lesson(obj.id, db)
         obj.links_after = await get_links_after_by_lesson(obj.id, db)
 
-    return sorted(obj_lessons, key=lambda x: x.id)
+        db_views = await db.execute(select(auth_models.View).where(auth_models.View.lesson_id == obj.id))
+        obj_views = db_views.scalars().all()
+
+        obj.number_of_views = len(obj_views)
+
+    if sort_by is None or sort_by == "new":
+        obj_lessons = sorted(obj_lessons, key=lambda x: -x.id)
+    elif sort_by == "popular":
+        obj_lessons = sorted(obj_lessons, key=lambda x: -x.number_of_views)
+    return obj_lessons
 
 
 async def update_lesson(lesson_id: int,

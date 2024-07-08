@@ -30,6 +30,7 @@ class LessonRead(BaseModel):
     path_to_audio: str | None
     links_before: list[LinkedLessonRead]
     links_after: list[LinkedLessonRead]
+    number_of_views: int
 
     @computed_field
     @property

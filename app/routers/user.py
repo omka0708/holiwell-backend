@@ -107,6 +107,30 @@ async def get_favorite(user: models.User = Depends(fastapi_users.current_user())
     return await crud.get_favorites_by_user(user.id, session)
 
 
+@router.post("/watch-lesson", response_model=schemas.ViewCreate)
+async def create_view(lesson_id: Annotated[int, Form()],
+                      user: models.User = Depends(fastapi_users.current_user()),
+                      session: AsyncSession = Depends(get_async_session)):
+    result = await crud.create_view(user.id, lesson_id, session)
+    if result == 'no_lesson':
+        raise HTTPException(status_code=404, detail={
+            "status": "error",
+            "msg": f"Lesson {lesson_id} doesn't exist."
+        })
+    elif result == 'already_exists':
+        raise HTTPException(status_code=409, detail={
+            "status": "error",
+            "msg": f"Lesson {lesson_id} has been already watched."
+        })
+    return Response(status_code=201)
+
+
+@router.get("/my-viewed", response_model=list[lesson_schemas.LessonRead])
+async def get_views(user: models.User = Depends(fastapi_users.current_user()),
+                    session: AsyncSession = Depends(get_async_session)):
+    return await crud.get_views_by_user(user.id, session)
+
+
 router.include_router(
     fastapi_users.get_users_router(schemas.UserRead, schemas.UserUpdate),
     tags=["user"],

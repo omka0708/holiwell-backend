@@ -50,3 +50,7 @@ class PlannedLessonRead(BaseModel):
 
 class FavoriteCreate(BaseModel):
     lesson_id: int
+
+
+class ViewCreate(BaseModel):
+    lesson_id: int

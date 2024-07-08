@@ -61,6 +61,12 @@ async def create_view(user_id: int, lesson_id: int, db: AsyncSession):
     if not db_lesson:
         return 'no_lesson'
 
+    db_lesson = await db.execute(
+        select(models.View).filter(and_(models.View.user_id == user_id, models.View.lesson_id == lesson_id))
+    )
+    if db_lesson.scalar():
+        return 'already_exists'
+
     db_view = models.View(
         **{
             'user_id': user_id,
