@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.course import models, schemas
 from app.lesson import models as lesson_models
-from app.lesson.crud import get_links_before_by_lesson, get_links_after_by_lesson
+from app.lesson.crud import get_links_before_by_lesson, get_links_after_by_lesson, get_number_of_views
 from app.utils import upload_file, delete_file
 
 
@@ -29,9 +29,13 @@ async def get_course_types(db: AsyncSession):
 
     for obj_course_type in obj_course_types:
         for course in obj_course_type.courses:
+            course.course_type_slug = obj_course_type.slug
+            course.course_type_id = obj_course_type.id
             for lesson in course.lessons:
                 lesson.links_before = await get_links_before_by_lesson(lesson.id, db)
                 lesson.links_after = await get_links_after_by_lesson(lesson.id, db)
+                lesson.course_type_slug = obj_course_type.slug
+                lesson.number_of_views = await get_number_of_views(lesson.id, db)
 
     return sorted(obj_course_types, key=lambda x: x.id)
 
@@ -43,9 +47,13 @@ async def get_course_type(course_type_slug: str, db: AsyncSession):
         return
 
     for course in obj_course_type.courses:
+        course.course_type_slug = obj_course_type.slug
+        course.course_type_id = obj_course_type.id
         for lesson in course.lessons:
             lesson.links_before = await get_links_before_by_lesson(lesson.id, db)
             lesson.links_after = await get_links_after_by_lesson(lesson.id, db)
+            lesson.course_type_slug = obj_course_type.slug
+            lesson.number_of_views = await get_number_of_views(lesson.id, db)
 
     return obj_course_type
 
@@ -89,6 +97,8 @@ async def get_course(course_id: int, db: AsyncSession):
         lesson.course_type_slug = db_course.course_type.slug
         lesson.links_before = await get_links_before_by_lesson(lesson.id, db)
         lesson.links_after = await get_links_after_by_lesson(lesson.id, db)
+        lesson.course_type_slug = lesson.course.course_type.slug if lesson.course is not None else None
+        lesson.number_of_views = await get_number_of_views(lesson.id, db)
 
     return db_course
 
@@ -104,6 +114,8 @@ async def get_courses(db: AsyncSession):
             lesson.course_type_slug = obj.course_type.slug
             lesson.links_before = await get_links_before_by_lesson(lesson.id, db)
             lesson.links_after = await get_links_after_by_lesson(lesson.id, db)
+            lesson.course_type_slug = obj.course_type.slug
+            lesson.number_of_views = await get_number_of_views(lesson.id, db)
 
     return sorted(obj_courses, key=lambda x: x.id)
 

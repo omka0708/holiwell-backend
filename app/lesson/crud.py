@@ -1,5 +1,5 @@
 from fastapi import UploadFile
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.lesson import models, schemas
@@ -39,11 +39,7 @@ async def get_lesson(lesson_id: int, db: AsyncSession):
     db_lesson.trainer = await get_trainer(db_lesson.trainer_id, db)
     db_lesson.links_before = await get_links_before_by_lesson(lesson_id, db)
     db_lesson.links_after = await get_links_after_by_lesson(lesson_id, db)
-
-    db_views = await db.execute(select(auth_models.View).where(auth_models.View.lesson_id == lesson_id))
-    obj_views = db_views.scalars().all()
-
-    db_lesson.number_of_views = len(obj_views)
+    db_lesson.number_of_views = await get_number_of_views(lesson_id, db)
 
     return db_lesson
 
@@ -57,11 +53,7 @@ async def get_lessons(sort_by: str | None, db: AsyncSession):
         obj.trainer = await get_trainer(obj.trainer_id, db)
         obj.links_before = await get_links_before_by_lesson(obj.id, db)
         obj.links_after = await get_links_after_by_lesson(obj.id, db)
-
-        db_views = await db.execute(select(auth_models.View).where(auth_models.View.lesson_id == obj.id))
-        obj_views = db_views.scalars().all()
-
-        obj.number_of_views = len(obj_views)
+        obj.number_of_views = await get_number_of_views(obj.id, db)
 
     if sort_by is None or sort_by == "new":
         obj_lessons = sorted(obj_lessons, key=lambda x: -x.id)
@@ -193,3 +185,9 @@ async def get_links_after_by_lesson(lesson_id: int, db: AsyncSession):
                                             where(models.LinkAfterLesson.lesson_id == lesson_id))
     obj_link_after_lesson = db_link_after_lesson.scalars().all()
     return obj_link_after_lesson
+
+
+async def get_number_of_views(lesson_id: int, db: AsyncSession) -> int:
+    cnt = await db.execute(select(func.count()).select_from(auth_models.View).
+                           where(auth_models.View.lesson_id == lesson_id))
+    return cnt.scalar()
