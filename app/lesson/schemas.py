@@ -31,6 +31,8 @@ class LessonRead(BaseModel):
     links_before: list[LinkedLessonRead]
     links_after: list[LinkedLessonRead]
     number_of_views: int
+    is_viewed: bool
+    is_favorite: bool
 
     @computed_field
     @property

@@ -51,7 +51,7 @@ async def get_planned_lessons_by_user(user_id: int, db: AsyncSession):
     obj_planned_lessons = db_planned_lessons.scalars().all()
 
     for obj in obj_planned_lessons:
-        obj.lesson = await get_lesson(obj.lesson_id, db)
+        obj.lesson = await get_lesson(obj.lesson_id, user_id, db)
 
     return obj_planned_lessons
 
@@ -107,7 +107,7 @@ async def get_views_by_user(user_id: int, db: AsyncSession):
     lesson_ids = tuple(view.lesson_id for view in db_views.scalars().all())
     if not lesson_ids:
         return []
-    obj_lessons = [await get_lesson(lesson_id, db) for lesson_id in lesson_ids]
+    obj_lessons = [await get_lesson(lesson_id, user_id, db) for lesson_id in lesson_ids]
     return obj_lessons
 
 
@@ -116,7 +116,7 @@ async def get_favorites_by_user(user_id: int, db: AsyncSession):
     lesson_ids = tuple(view.lesson_id for view in db_favorites.scalars().all())
     if not lesson_ids:
         return []
-    obj_lessons = [await get_lesson(lesson_id, db) for lesson_id in lesson_ids]
+    obj_lessons = [await get_lesson(lesson_id, user_id, db) for lesson_id in lesson_ids]
     return obj_lessons
 
 

@@ -4,7 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.course import models, schemas
 from app.lesson import models as lesson_models
-from app.lesson.crud import get_links_before_by_lesson, get_links_after_by_lesson, get_number_of_views
+from app.lesson.crud import (get_links_before_by_lesson, get_links_after_by_lesson, get_number_of_views,
+                             is_viewed, is_favorite)
 from app.utils import upload_file, delete_file
 
 
@@ -23,7 +24,7 @@ async def create_course_type(course_type: schemas.CourseTypeCreate, db: AsyncSes
     return db_course_type
 
 
-async def get_course_types(db: AsyncSession):
+async def get_course_types(user_id: int | None, db: AsyncSession):
     db_course_type = await db.execute(select(models.CourseType).limit(1000))
     obj_course_types = db_course_type.scalars().all()
 
@@ -36,11 +37,13 @@ async def get_course_types(db: AsyncSession):
                 lesson.links_after = await get_links_after_by_lesson(lesson.id, db)
                 lesson.course_type_slug = obj_course_type.slug
                 lesson.number_of_views = await get_number_of_views(lesson.id, db)
+                lesson.is_viewed = await is_viewed(lesson.id, user_id, db)
+                lesson.is_favorite = await is_favorite(lesson.id, user_id, db)
 
     return sorted(obj_course_types, key=lambda x: x.id)
 
 
-async def get_course_type(course_type_slug: str, db: AsyncSession):
+async def get_course_type(course_type_slug: str, user_id: int | None, db: AsyncSession):
     db_course_type = await db.execute(select(models.CourseType).where(models.CourseType.slug == course_type_slug))
     obj_course_type = db_course_type.scalar()
     if not obj_course_type:
@@ -54,6 +57,8 @@ async def get_course_type(course_type_slug: str, db: AsyncSession):
             lesson.links_after = await get_links_after_by_lesson(lesson.id, db)
             lesson.course_type_slug = obj_course_type.slug
             lesson.number_of_views = await get_number_of_views(lesson.id, db)
+            lesson.is_viewed = await is_viewed(lesson.id, user_id, db)
+            lesson.is_favorite = await is_favorite(lesson.id, user_id, db)
 
     return obj_course_type
 
@@ -86,7 +91,7 @@ async def get_lessons_by_course(course_id: int, db: AsyncSession):
     return obj_lessons
 
 
-async def get_course(course_id: int, db: AsyncSession):
+async def get_course(course_id: int, user_id: int | None, db: AsyncSession):
     db_course = await db.get(models.Course, course_id)
     if not db_course:
         return
@@ -99,11 +104,13 @@ async def get_course(course_id: int, db: AsyncSession):
         lesson.links_after = await get_links_after_by_lesson(lesson.id, db)
         lesson.course_type_slug = lesson.course.course_type.slug if lesson.course is not None else None
         lesson.number_of_views = await get_number_of_views(lesson.id, db)
+        lesson.is_viewed = await is_viewed(lesson.id, user_id, db)
+        lesson.is_favorite = await is_favorite(lesson.id, user_id, db)
 
     return db_course
 
 
-async def get_courses(db: AsyncSession):
+async def get_courses(user_id: int | None, db: AsyncSession):
     db_courses = await db.execute(select(models.Course).limit(1000))
     obj_courses = db_courses.scalars().all()
 
@@ -116,6 +123,8 @@ async def get_courses(db: AsyncSession):
             lesson.links_after = await get_links_after_by_lesson(lesson.id, db)
             lesson.course_type_slug = obj.course_type.slug
             lesson.number_of_views = await get_number_of_views(lesson.id, db)
+            lesson.is_viewed = await is_viewed(lesson.id, user_id, db)
+            lesson.is_favorite = await is_favorite(lesson.id, user_id, db)
 
     return sorted(obj_courses, key=lambda x: x.id)
 

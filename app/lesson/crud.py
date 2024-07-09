@@ -1,5 +1,5 @@
 from fastapi import UploadFile
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.lesson import models, schemas
@@ -30,7 +30,7 @@ async def create_lesson(lesson: schemas.LessonCreate,
     return db_lesson
 
 
-async def get_lesson(lesson_id: int, db: AsyncSession):
+async def get_lesson(lesson_id: int, user_id: int | None, db: AsyncSession):
     db_lesson = await db.get(models.Lesson, lesson_id)
     if not db_lesson:
         return
@@ -40,11 +40,13 @@ async def get_lesson(lesson_id: int, db: AsyncSession):
     db_lesson.links_before = await get_links_before_by_lesson(lesson_id, db)
     db_lesson.links_after = await get_links_after_by_lesson(lesson_id, db)
     db_lesson.number_of_views = await get_number_of_views(lesson_id, db)
+    db_lesson.is_viewed = await is_viewed(lesson_id, user_id, db)
+    db_lesson.is_favorite = await is_favorite(lesson_id, user_id, db)
 
     return db_lesson
 
 
-async def get_lessons(sort_by: str | None, db: AsyncSession):
+async def get_lessons(sort_by: str | None, user_id: int | None, db: AsyncSession):
     db_lessons = await db.execute(select(models.Lesson).limit(1000))
     obj_lessons = db_lessons.scalars().all()
 
@@ -54,6 +56,8 @@ async def get_lessons(sort_by: str | None, db: AsyncSession):
         obj.links_before = await get_links_before_by_lesson(obj.id, db)
         obj.links_after = await get_links_after_by_lesson(obj.id, db)
         obj.number_of_views = await get_number_of_views(obj.id, db)
+        obj.is_viewed = await is_viewed(obj.id, user_id, db)
+        obj.is_favorite = await is_favorite(obj.id, user_id, db)
 
     if sort_by is None or sort_by == "new":
         obj_lessons = sorted(obj_lessons, key=lambda x: -x.id)
@@ -191,3 +195,21 @@ async def get_number_of_views(lesson_id: int, db: AsyncSession) -> int:
     cnt = await db.execute(select(func.count()).select_from(auth_models.View).
                            where(auth_models.View.lesson_id == lesson_id))
     return cnt.scalar()
+
+
+async def is_viewed(lesson_id: int, user_id: int | None, db: AsyncSession) -> bool:
+    if user_id is None:
+        return False
+    cnt = await db.execute(select(func.count()).select_from(auth_models.View).
+                           where(and_(auth_models.View.lesson_id == lesson_id,
+                                      auth_models.View.user_id == user_id)))
+    return cnt.scalar() > 0
+
+
+async def is_favorite(lesson_id: int, user_id: int | None, db: AsyncSession) -> bool:
+    if user_id is None:
+        return False
+    cnt = await db.execute(select(func.count()).select_from(auth_models.Favorite).
+                           where(and_(auth_models.Favorite.lesson_id == lesson_id,
+                                      auth_models.Favorite.user_id == user_id)))
+    return cnt.scalar() > 0

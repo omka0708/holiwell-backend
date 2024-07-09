@@ -26,13 +26,16 @@ async def create_course_type(slug: Annotated[str, Form()],
 
 
 @router.get("/course-type/all", response_model=list[schemas.CourseTypeRead])
-async def read_course_types(session: AsyncSession = Depends(get_async_session)):
-    return await crud.get_course_types(session)
+async def read_course_types(user: User = Depends(fastapi_users.current_user(optional=True)),
+                            session: AsyncSession = Depends(get_async_session)):
+    return await crud.get_course_types(user.id if user else None, session)
 
 
 @router.get("/course-type/{course_type_slug}", response_model=schemas.CourseTypeRead)
-async def read_course(course_type_slug: str, session: AsyncSession = Depends(get_async_session)):
-    result = await crud.get_course_type(course_type_slug, session)
+async def read_course(course_type_slug: str,
+                      user: User = Depends(fastapi_users.current_user(optional=True)),
+                      session: AsyncSession = Depends(get_async_session)):
+    result = await crud.get_course_type(course_type_slug, user.id if user else None, session)
     if not result:
         raise HTTPException(status_code=404, detail={
             "status": "error",
@@ -61,13 +64,16 @@ async def create_course(title: Annotated[str, Form()],
 
 
 @router.get("/all", response_model=list[schemas.CourseRead])
-async def read_courses(session: AsyncSession = Depends(get_async_session)):
-    return await crud.get_courses(session)
+async def read_courses(user: User = Depends(fastapi_users.current_user(optional=True)),
+                       session: AsyncSession = Depends(get_async_session)):
+    return await crud.get_courses(user.id if user else None, session)
 
 
 @router.get("/{course_id}", response_model=schemas.CourseRead)
-async def read_course(course_id: int, session: AsyncSession = Depends(get_async_session)):
-    result = await crud.get_course(course_id, session)
+async def read_course(course_id: int,
+                      user: User = Depends(fastapi_users.current_user(optional=True)),
+                      session: AsyncSession = Depends(get_async_session)):
+    result = await crud.get_course(course_id, user.id if user else None, session)
     if not result:
         raise HTTPException(status_code=404, detail={
             "status": "error",
