@@ -46,8 +46,8 @@ async def get_lesson(lesson_id: int, user_id: int | None, db: AsyncSession):
     return db_lesson
 
 
-async def get_lessons(sort_by: str | None, user_id: int | None, db: AsyncSession):
-    db_lessons = await db.execute(select(models.Lesson).limit(1000))
+async def get_lessons(sort_by: str | None, user_id: int | None, course_type_slug: str | None, db: AsyncSession):
+    db_lessons = await db.execute(select(models.Lesson))
     obj_lessons = db_lessons.scalars().all()
 
     for obj in obj_lessons:
@@ -63,6 +63,9 @@ async def get_lessons(sort_by: str | None, user_id: int | None, db: AsyncSession
         obj_lessons = sorted(obj_lessons, key=lambda x: -x.id)
     elif sort_by == "popular":
         obj_lessons = sorted(obj_lessons, key=lambda x: -x.number_of_views)
+
+    if course_type_slug:
+        obj_lessons = list(filter(lambda x: x.course_type_slug == course_type_slug, obj_lessons))
     return obj_lessons
 
 

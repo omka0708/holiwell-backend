@@ -36,6 +36,7 @@ async def create_lesson(title: Annotated[str, Form()],
 
 @router.get("/all", response_model=list[schemas.LessonRead])
 async def read_lessons(sort_by: str | None = None,
+                       course_type_slug: str | None = None,
                        user: User = Depends(fastapi_users.current_user(optional=True)),
                        session: AsyncSession = Depends(get_async_session)):
     sort_by = sort_by.strip().lower() if sort_by is not None else None
@@ -44,7 +45,7 @@ async def read_lessons(sort_by: str | None = None,
             "status": "error",
             "msg": f"Unknown type of sorting ('{sort_by}', but requires 'new' or 'popular')"
         })
-    return await crud.get_lessons(sort_by, user.id if user else None, session)
+    return await crud.get_lessons(sort_by, user.id if user else None, course_type_slug, session)
 
 
 @router.get("/{lesson_id}", response_model=schemas.LessonRead)
