@@ -16,7 +16,7 @@ async def create_course_type(slug: Annotated[str, Form()],
                              user: User = Depends(fastapi_users.current_user(superuser=True)),
                              session: AsyncSession = Depends(get_async_session)):
     course_type = schemas.CourseTypeCreate(slug=slug)
-    result = await crud.create_course_type(course_type, session)
+    result = await crud.create_course_type(course_type, user.id if user else None, session)
     if not result:
         raise HTTPException(status_code=404, detail={
             "status": "error",
@@ -26,16 +26,31 @@ async def create_course_type(slug: Annotated[str, Form()],
 
 
 @router.get("/course-type/all", response_model=list[schemas.CourseTypeRead])
-async def read_course_types(user: User = Depends(fastapi_users.current_user(optional=True)),
+async def read_course_types(sort_by: str | None = None,
+                            user: User = Depends(fastapi_users.current_user(optional=True)),
                             session: AsyncSession = Depends(get_async_session)):
-    return await crud.get_course_types(user.id if user else None, session)
+    sort_by = sort_by.strip().lower() if sort_by is not None else None
+    if sort_by is not None and sort_by not in ("new", "popular"):
+        raise HTTPException(status_code=422, detail={
+            "status": "error",
+            "msg": f"Unknown type of sorting ('{sort_by}', but requires 'new' or 'popular')"
+        })
+    return await crud.get_course_types(user.id if user else None, sort_by, session)
 
 
 @router.get("/course-type/{course_type_slug}", response_model=schemas.CourseTypeRead)
 async def read_course(course_type_slug: str,
+                      sort_by: str | None = None,
                       user: User = Depends(fastapi_users.current_user(optional=True)),
                       session: AsyncSession = Depends(get_async_session)):
-    result = await crud.get_course_type(course_type_slug, user.id if user else None, session)
+    sort_by = sort_by.strip().lower() if sort_by is not None else None
+    if sort_by is not None and sort_by not in ("new", "popular"):
+        raise HTTPException(status_code=422, detail={
+            "status": "error",
+            "msg": f"Unknown type of sorting ('{sort_by}', but requires 'new' or 'popular')"
+        })
+
+    result = await crud.get_course_type(course_type_slug, user.id if user else None, sort_by, session)
     if not result:
         raise HTTPException(status_code=404, detail={
             "status": "error",
@@ -64,16 +79,30 @@ async def create_course(title: Annotated[str, Form()],
 
 
 @router.get("/all", response_model=list[schemas.CourseRead])
-async def read_courses(user: User = Depends(fastapi_users.current_user(optional=True)),
+async def read_courses(sort_by: str | None = None,
+                       user: User = Depends(fastapi_users.current_user(optional=True)),
                        session: AsyncSession = Depends(get_async_session)):
-    return await crud.get_courses(user.id if user else None, session)
+    sort_by = sort_by.strip().lower() if sort_by is not None else None
+    if sort_by is not None and sort_by not in ("new", "popular"):
+        raise HTTPException(status_code=422, detail={
+            "status": "error",
+            "msg": f"Unknown type of sorting ('{sort_by}', but requires 'new' or 'popular')"
+        })
+    return await crud.get_courses(user.id if user else None, sort_by, session)
 
 
 @router.get("/{course_id}", response_model=schemas.CourseRead)
-async def read_course(course_id: int,
+async def read_course(course_id: int, sort_by: str | None = None,
                       user: User = Depends(fastapi_users.current_user(optional=True)),
                       session: AsyncSession = Depends(get_async_session)):
-    result = await crud.get_course(course_id, user.id if user else None, session)
+    sort_by = sort_by.strip().lower() if sort_by is not None else None
+    if sort_by is not None and sort_by not in ("new", "popular"):
+        raise HTTPException(status_code=422, detail={
+            "status": "error",
+            "msg": f"Unknown type of sorting ('{sort_by}', but requires 'new' or 'popular')"
+        })
+
+    result = await crud.get_course(course_id, user.id if user else None, sort_by, session)
     if not result:
         raise HTTPException(status_code=404, detail={
             "status": "error",

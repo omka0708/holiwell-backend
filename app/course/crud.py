@@ -9,10 +9,10 @@ from app.lesson.crud import (get_links_before_by_lesson, get_links_after_by_less
 from app.utils import upload_file, delete_file
 
 
-async def create_course_type(course_type: schemas.CourseTypeCreate, db: AsyncSession):
+async def create_course_type(course_type: schemas.CourseTypeCreate, user_id: int | None, db: AsyncSession):
     course_type_dict = course_type.model_dump()
     db_course_type = models.CourseType(**course_type_dict)
-    db_course_types = await get_course_types(db)
+    db_course_types = await get_course_types(user_id, None, db)
 
     db_course_types_slugs = [item.slug for item in db_course_types]
     if db_course_type.slug in db_course_types_slugs:
@@ -24,7 +24,7 @@ async def create_course_type(course_type: schemas.CourseTypeCreate, db: AsyncSes
     return db_course_type
 
 
-async def get_course_types(user_id: int | None, db: AsyncSession):
+async def get_course_types(user_id: int | None, sort_by: str | None, db: AsyncSession):
     db_course_type = await db.execute(select(models.CourseType).limit(1000))
     obj_course_types = db_course_type.scalars().all()
 
@@ -32,6 +32,7 @@ async def get_course_types(user_id: int | None, db: AsyncSession):
         for course in obj_course_type.courses:
             course.course_type_slug = obj_course_type.slug
             course.course_type_id = obj_course_type.id
+
             for lesson in course.lessons:
                 lesson.links_before = await get_links_before_by_lesson(lesson.id, db)
                 lesson.links_after = await get_links_after_by_lesson(lesson.id, db)
@@ -40,10 +41,15 @@ async def get_course_types(user_id: int | None, db: AsyncSession):
                 lesson.is_viewed = await is_viewed(lesson.id, user_id, db)
                 lesson.is_favorite = await is_favorite(lesson.id, user_id, db)
 
+            if sort_by is None or sort_by == "new":
+                course.lessons = sorted(course.lessons, key=lambda x: -x.id)
+            elif sort_by == "popular":
+                course.lessons = sorted(course.lessons, key=lambda x: -x.number_of_views)
+
     return sorted(obj_course_types, key=lambda x: x.id)
 
 
-async def get_course_type(course_type_slug: str, user_id: int | None, db: AsyncSession):
+async def get_course_type(course_type_slug: str, user_id: int | None, sort_by: str | None, db: AsyncSession):
     db_course_type = await db.execute(select(models.CourseType).where(models.CourseType.slug == course_type_slug))
     obj_course_type = db_course_type.scalar()
     if not obj_course_type:
@@ -52,6 +58,7 @@ async def get_course_type(course_type_slug: str, user_id: int | None, db: AsyncS
     for course in obj_course_type.courses:
         course.course_type_slug = obj_course_type.slug
         course.course_type_id = obj_course_type.id
+
         for lesson in course.lessons:
             lesson.links_before = await get_links_before_by_lesson(lesson.id, db)
             lesson.links_after = await get_links_after_by_lesson(lesson.id, db)
@@ -59,6 +66,11 @@ async def get_course_type(course_type_slug: str, user_id: int | None, db: AsyncS
             lesson.number_of_views = await get_number_of_views(lesson.id, db)
             lesson.is_viewed = await is_viewed(lesson.id, user_id, db)
             lesson.is_favorite = await is_favorite(lesson.id, user_id, db)
+
+        if sort_by is None or sort_by == "new":
+            course.lessons = sorted(course.lessons, key=lambda x: -x.id)
+        elif sort_by == "popular":
+            course.lessons = sorted(course.lessons, key=lambda x: -x.number_of_views)
 
     return obj_course_type
 
@@ -79,19 +91,13 @@ async def create_course(course: schemas.CourseCreate,
     return db_course
 
 
-# async def get_courses_by_course_type(course_type_id: int, db: AsyncSession):
-#     db_courses = await db.execute(select(models.Course).where(models.Course.course_type_id == course_type_id))
-#     obj_courses = db_courses.scalars().all()
-#     return obj_courses
-
-
 async def get_lessons_by_course(course_id: int, db: AsyncSession):
     db_lessons = await db.execute(select(lesson_models.Lesson).where(lesson_models.Lesson.course_id == course_id))
     obj_lessons = db_lessons.scalars().all()
     return obj_lessons
 
 
-async def get_course(course_id: int, user_id: int | None, db: AsyncSession):
+async def get_course(course_id: int, user_id: int | None, sort_by: str | None, db: AsyncSession):
     db_course = await db.get(models.Course, course_id)
     if not db_course:
         return
@@ -107,10 +113,15 @@ async def get_course(course_id: int, user_id: int | None, db: AsyncSession):
         lesson.is_viewed = await is_viewed(lesson.id, user_id, db)
         lesson.is_favorite = await is_favorite(lesson.id, user_id, db)
 
+    if sort_by is None or sort_by == "new":
+        db_course.lessons = sorted(db_course.lessons, key=lambda x: -x.id)
+    elif sort_by == "popular":
+        db_course.lessons = sorted(db_course.lessons, key=lambda x: -x.number_of_views)
+
     return db_course
 
 
-async def get_courses(user_id: int | None, db: AsyncSession):
+async def get_courses(user_id: int | None, sort_by: str | None, db: AsyncSession):
     db_courses = await db.execute(select(models.Course).limit(1000))
     obj_courses = db_courses.scalars().all()
 
@@ -125,6 +136,11 @@ async def get_courses(user_id: int | None, db: AsyncSession):
             lesson.number_of_views = await get_number_of_views(lesson.id, db)
             lesson.is_viewed = await is_viewed(lesson.id, user_id, db)
             lesson.is_favorite = await is_favorite(lesson.id, user_id, db)
+
+        if sort_by is None or sort_by == "new":
+            obj.lessons = sorted(obj.lessons, key=lambda x: -x.id)
+        elif sort_by == "popular":
+            obj.lessons = sorted(obj.lessons, key=lambda x: -x.number_of_views)
 
     return sorted(obj_courses, key=lambda x: x.id)
 
