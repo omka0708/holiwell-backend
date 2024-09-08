@@ -17,6 +17,7 @@ class CourseRead(BaseModel):
     course_type_id: int | None
     course_type_slug: str | None
     path_to_cover: str | None
+    number_of_views: int
     lessons: list[lesson_schemas.LessonRead]
 
     @field_serializer('path_to_cover')

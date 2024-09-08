@@ -104,6 +104,7 @@ async def get_course(course_id: int, user_id: int | None, sort_by: str | None, d
 
     db_course.course_type_slug = db_course.course_type.slug
     db_course.course_type_id = db_course.course_type.id
+    db_course.number_of_views = 0
     for lesson in db_course.lessons:
         lesson.course_type_slug = db_course.course_type.slug
         lesson.links_before = await get_links_before_by_lesson(lesson.id, db)
@@ -112,6 +113,7 @@ async def get_course(course_id: int, user_id: int | None, sort_by: str | None, d
         lesson.number_of_views = await get_number_of_views(lesson.id, db)
         lesson.is_viewed = await is_viewed(lesson.id, user_id, db)
         lesson.is_favorite = await is_favorite(lesson.id, user_id, db)
+        db_course.number_of_views += lesson.number_of_views
 
     if sort_by is None or sort_by == "new":
         db_course.lessons = sorted(db_course.lessons, key=lambda x: -x.id)
@@ -128,6 +130,7 @@ async def get_courses(user_id: int | None, sort_by: str | None, db: AsyncSession
     for obj in obj_courses:
         obj.course_type_slug = obj.course_type.slug
         obj.course_type_id = obj.course_type.id
+        obj.number_of_views = 0
         for lesson in obj.lessons:
             lesson.course_type_slug = obj.course_type.slug
             lesson.links_before = await get_links_before_by_lesson(lesson.id, db)
@@ -136,13 +139,14 @@ async def get_courses(user_id: int | None, sort_by: str | None, db: AsyncSession
             lesson.number_of_views = await get_number_of_views(lesson.id, db)
             lesson.is_viewed = await is_viewed(lesson.id, user_id, db)
             lesson.is_favorite = await is_favorite(lesson.id, user_id, db)
+            obj.number_of_views += lesson.number_of_views
 
-        if sort_by is None or sort_by == "new":
-            obj.lessons = sorted(obj.lessons, key=lambda x: -x.id)
-        elif sort_by == "popular":
-            obj.lessons = sorted(obj.lessons, key=lambda x: -x.number_of_views)
+    if sort_by is None or sort_by == "new":
+        obj_courses = sorted(obj_courses, key=lambda x: -x.id)
+    elif sort_by == "popular":
+        obj_courses = sorted(obj_courses, key=lambda x: -x.number_of_views)
 
-    return sorted(obj_courses, key=lambda x: x.id)
+    return obj_courses
 
 
 async def update_course(course_id: int,
