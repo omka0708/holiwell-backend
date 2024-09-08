@@ -63,3 +63,7 @@ def get_file_length(path: str) -> str | None:
 
         formatted = f"{hours:02.0f}:{minutes:02.0f}:{seconds:02.0f}"
         return formatted
+
+
+def get_file_format(file: UploadFile) -> str:
+    return file.filename.split('.')[-1]

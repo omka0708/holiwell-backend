@@ -7,6 +7,7 @@ from app.auth.auth import fastapi_users
 from app.auth.models import User
 from app.database import get_async_session
 from app.lesson import schemas, crud
+from app.utils import get_file_format
 
 router = APIRouter()
 
@@ -25,6 +26,24 @@ async def create_lesson(title: Annotated[str, Form()],
                                   description=description,
                                   trainer_id=trainer_id,
                                   course_id=course_id)
+    if cover is not None:
+        if get_file_format(cover) not in ['png', 'jpg', 'jpeg']:
+            raise HTTPException(status_code=418, detail={
+                "status": "error",
+                "msg": f"Cover must be in png/jpg format"
+            })
+    if video is not None:
+        if get_file_format(video) != 'mp4':
+            raise HTTPException(status_code=418, detail={
+                "status": "error",
+                "msg": f"Video must be in mp4 format"
+            })
+    if audio is not None:
+        if get_file_format(audio) != 'mp3':
+            raise HTTPException(status_code=418, detail={
+                "status": "error",
+                "msg": f"Audio must be in mp3 format"
+            })
     result = await crud.create_lesson(lesson, cover, video, audio, session)
     if result == 'no_trainer':
         raise HTTPException(status_code=404, detail={
@@ -76,6 +95,24 @@ async def update_lesson(lesson_id: int,
                                   description=description,
                                   trainer_id=trainer_id,
                                   course_id=course_id)
+    if cover is not None:
+        if get_file_format(cover) not in ['png', 'jpg', 'jpeg']:
+            raise HTTPException(status_code=418, detail={
+                "status": "error",
+                "msg": f"Cover must be in png/jpg format"
+            })
+    if video is not None:
+        if get_file_format(video) != 'mp4':
+            raise HTTPException(status_code=418, detail={
+                "status": "error",
+                "msg": f"Video must be in mp4 format"
+            })
+    if audio is not None:
+        if get_file_format(audio) != 'mp3':
+            raise HTTPException(status_code=418, detail={
+                "status": "error",
+                "msg": f"Audio must be in mp3 format"
+            })
     result = await crud.update_lesson(lesson_id, lesson, cover, video, audio, session)
     if result == 'no_lesson':
         raise HTTPException(status_code=404, detail={
