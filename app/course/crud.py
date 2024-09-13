@@ -32,6 +32,7 @@ async def get_course_types(user_id: int | None, sort_by: str | None, db: AsyncSe
         for course in obj_course_type.courses:
             course.course_type_slug = obj_course_type.slug
             course.course_type_id = obj_course_type.id
+            course.number_of_views = 0
 
             for lesson in course.lessons:
                 lesson.links_before = await get_links_before_by_lesson(lesson.id, db)
@@ -40,6 +41,7 @@ async def get_course_types(user_id: int | None, sort_by: str | None, db: AsyncSe
                 lesson.number_of_views = await get_number_of_views(lesson.id, db)
                 lesson.is_viewed = await is_viewed(lesson.id, user_id, db)
                 lesson.is_favorite = await is_favorite(lesson.id, user_id, db)
+                course.number_of_views += lesson.number_of_views
 
             if sort_by is None or sort_by == "new":
                 course.lessons = sorted(course.lessons, key=lambda x: -x.id)
@@ -58,6 +60,7 @@ async def get_course_type(course_type_slug: str, user_id: int | None, sort_by: s
     for course in obj_course_type.courses:
         course.course_type_slug = obj_course_type.slug
         course.course_type_id = obj_course_type.id
+        course.number_of_views = 0
 
         for lesson in course.lessons:
             lesson.links_before = await get_links_before_by_lesson(lesson.id, db)
@@ -66,6 +69,7 @@ async def get_course_type(course_type_slug: str, user_id: int | None, sort_by: s
             lesson.number_of_views = await get_number_of_views(lesson.id, db)
             lesson.is_viewed = await is_viewed(lesson.id, user_id, db)
             lesson.is_favorite = await is_favorite(lesson.id, user_id, db)
+            course.number_of_views += lesson.number_of_views
 
         if sort_by is None or sort_by == "new":
             course.lessons = sorted(course.lessons, key=lambda x: -x.id)
