@@ -25,6 +25,21 @@ services:
       - db
       - pgadmin
 
+  tg:
+    build:
+      context: .
+    env_file:
+      - .env
+    environment:
+      - HOLIWELL_APP_HOST=app
+      - HOLIWELL_APP_PORT=8000
+    container_name: holiwell-tg
+    command: bash -c "python bot.py"
+    ports:
+      - "8001:8001"
+    depends_on:
+      - app
+
 
   pgadmin:
     container_name: holiwell-pgadmin

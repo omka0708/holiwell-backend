@@ -7,7 +7,8 @@ from app.database import Base
 
 class User(SQLAlchemyBaseUserTable[int], Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
-    email = Column(String, nullable=False)
+    email = Column(String, nullable=True)
+    tg_id = Column(Integer, nullable=True, unique=True)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     path_to_avatar = Column(String)

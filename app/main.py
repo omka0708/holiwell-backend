@@ -1,7 +1,6 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse, Response, JSONResponse
-from pydantic import ValidationError
+from fastapi.responses import RedirectResponse, Response
 
 from app.auth.auth import auth_backend, fastapi_users
 from app.auth.schemas import UserRead, UserCreate
